@@ -1,6 +1,6 @@
 # QGIS Lane Topology & Integrity Checker
 
-This PyQGIS script is an automated validation tool designed to verify the geometric integrity and topological routing of road networks (lanes, centerlines, cycle paths) directly within QGIS. It is highly useful for QA/QC processes in High-Definition (HD) Mapping, autonomous driving datasets, and traffic simulation modeling.
+This PyQGIS script is an automated validation tool designed to verify the geometric integrity and topological routing of geojson lane maps directly within QGIS.
 
 The tool analyzes LineString vector layers to detect microscopic snapping gaps, orphan lanes, and logical routing mismatches where lane borders deviate from their guiding centerlines.
 

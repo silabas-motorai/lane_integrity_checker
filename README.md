@@ -7,7 +7,7 @@ The tool analyzes LineString vector layers to detect snapping gaps, misaligned s
 ## 🚀 Features
 
 * **Gap Detection (Snapping Checks):** Identifies floating lane endpoints that fail to connect to adjacent lanes, or endpoints that miss their logical group continuation.
-* **Stop / Wait Line Validation:** Checks that every endpoint of a regulatory stop or wait line (`de294` / `de341`) is precisely snapped to a border geometry. Flags lines that are close but not exactly touching.
+* **Stop / Wait Line Validation:** Checks that every lane line (border, centerline, divider) crossing a regulatory stop or wait line (de294 / de341) has its start or end node exactly at the intersection point. Also verifies that the endpoints of the stop/wait line itself are precisely snapped to a lane geometry. Flags any crossing without a node at the intersection, and any hanging endpoint.
 * **Topology Filtering:** Prevents false connections by forbidding blind snaps between `road` and pure `cycle` lanes, while safely handling shared `road_cycle` transitions.
 * **Border Routing Verification:** Evaluates the path of right/left border lanes against their designated centerline. If a border lane connects to a different road than its centerline, it flags a `BORDER_MISMATCH`.
 * **False Positive Elimination:** Differentiates between actual routing errors and innocent geometric friction (e.g., parallel snapped lane linestrings), and respects intentional dead-ends or map boundaries to avoid spamming errors.

@@ -93,10 +93,8 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
         except:
             return None, None, None
         if not line: return None, None, None
-        
         try: way_id = int(str(feat["way_id"])[:3])
         except: way_id = 0
-            
         greater_x = {100, 101, 102, 400, 401, 402, 403, 500}
         is_eastbound = way_id in greater_x
         if (is_eastbound and line[0].x() > line[-1].x()) or \
@@ -127,7 +125,6 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                 return True
         return False
 
-    # --- Connection graph (Keep robust is_confirmed logic to prevent 1520 false positive) ---
     successors   = defaultdict(set)
     predecessors = defaultdict(set)
     raw_succ = defaultdict(lambda: defaultdict(list))
@@ -138,7 +135,6 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
         rid = f['road_id']
         f_entry, f_exit, f_east = flow_cache[f.id()]
         if not f_entry: continue
-        
         f_group = group_cache[f.id()]
         key = (rid, f_east, f_group)
         group_counts[key] += 1
@@ -204,11 +200,9 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
             if oid == f.id() or oid not in feat_by_id: continue
             other = feat_by_id[oid]
             o_l_type = str(other['lane_type']).lower()
-            
             if (my_l_type == 'road' and o_l_type == 'cycle') or \
                (my_l_type == 'cycle' and o_l_type == 'road'):
                 continue
-            
             o_entry, o_exit, _ = flow_cache[oid]
             if (o_entry and f_entry.distance(o_entry) < snap_tol) or \
                (o_exit  and f_entry.distance(o_exit) < snap_tol):
@@ -247,11 +241,9 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
             if oid == f.id() or oid not in feat_by_id: continue
             other = feat_by_id[oid]
             o_l_type = str(other['lane_type']).lower()
-            
             if (my_l_type == 'road' and o_l_type == 'cycle') or \
                (my_l_type == 'cycle' and o_l_type == 'road'):
                 continue
-            
             o_entry, o_exit, _ = flow_cache[oid]
             if (o_entry and f_exit.distance(o_entry) < snap_tol) or \
                (o_exit  and f_exit.distance(o_exit) < snap_tol):
@@ -284,7 +276,6 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                         issues.append({"way_id": wid, "road_id": rid, "point": f_exit,
                                        "type": f"{l_type}_GAP"})
 
-
     # --- 2. Border routing consistency checks ---
     roads_with_ref_map = defaultdict(int)
     for f in all_lines:
@@ -303,7 +294,6 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
     for cl in centerlines:
         cl_entry, cl_exit, cl_east = flow_cache[cl.id()]
         if not cl_entry: continue
-
         try:
             cl_rid = str(cl['road_id'])
             cl_wid = int(cl['way_id'])
@@ -337,7 +327,7 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
 
         border_pair = get_border_way_ids_for_centerline(rwr, cl_wid)
         if not border_pair: continue
-        
+
         right_wid, left_wid = border_pair
         pair_wids = {right_wid, left_wid}
 
@@ -369,12 +359,10 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                     if not o_entry or o_east != b_east: continue
                     if b_exit.distance(o_entry) >= graph_tol: continue
                     if str(other['lane_type']).lower() == 'cycle': continue
-                    
                     o_rid = str(other['road_id'])
                     o_wid = int(other['way_id'])
                     if o_wid in all_pair_wids and o_rid not in all_succ: continue
                     exit_road_rids.add(o_rid)
-
                 if exit_road_rids and not exit_road_rids.intersection(all_succ):
                     issues.append({
                         "way_id": b_wid, "road_id": cl_rid, "point": b_exit,
@@ -391,19 +379,17 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                     if not o_exit_pt or o_east != b_east: continue
                     if b_entry.distance(o_exit_pt) >= graph_tol: continue
                     if str(other['lane_type']).lower() == 'cycle': continue
-                    
                     o_rid = str(other['road_id'])
                     o_wid = int(other['way_id'])
                     if o_wid in all_pair_wids and o_rid not in all_pred: continue
                     entry_road_rids.add(o_rid)
-
                 if entry_road_rids and not entry_road_rids.intersection(all_pred):
                     issues.append({
                         "way_id": b_wid, "road_id": cl_rid, "point": b_entry,
                         "type": f"BORDER_MISMATCH → road_id {sorted(list(entry_road_rids))} (expected: road_id {sorted(list(all_pred))})"
                     })
 
-# --- 3. Stop/Wait line hanging checks ---
+    # --- 3. Stop/Wait line hanging checks ---
     if stop_wait_lines:
         lane_index, lane_by_id = QgsSpatialIndex(), {}
         for bf in all_lines:
@@ -446,7 +432,7 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                 else:
                     continue
                 try:
-                    l_line = lane_f.geometry().asPolyline() if not lane_f.geometry().isMultipart() else lane_f.geometry().asMultiPolyline()[0]
+                    l_line = lane_geom.asPolyline() if not lane_geom.isMultipart() else lane_geom.asMultiPolyline()[0]
                 except:
                     continue
                 if not l_line: continue
@@ -475,6 +461,8 @@ def check_lane_integrity(snap_tol=1e-15, graph_tol=1e-5):
                     issues.append({"way_id": wid, "road_id": rid,
                                    "point": pt, "type": "STOP_LINE_GAP"})
 
+    return issues
+
 
 # --- Layer management and rendering ---
 existing = QgsProject.instance().mapLayersByName("Integrity_Issues")
@@ -494,7 +482,7 @@ if detected:
         QgsField("issue_type", QVariant.String)
     ])
     temp_layer.updateFields()
-    
+
     seen_issues = set()
     for issue in detected:
         issue_sig = (round(issue['point'].x(), 5), round(issue['point'].y(), 5), issue['type'])
@@ -504,7 +492,7 @@ if detected:
             feat.setGeometry(QgsGeometry.fromPointXY(issue['point']))
             feat.setAttributes([str(issue['road_id']), str(issue['way_id']), issue['type']])
             provider.addFeature(feat)
-            
+
     temp_layer.updateExtents()
     symbol = QgsMarkerSymbol.createSimple({
         'name': 'circle', 'color': 'transparent',
